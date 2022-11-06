@@ -4,13 +4,16 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import com.bumptech.glide.Glide;
 import com.quexs.tool.utildemo.databinding.ActivityMainBinding;
 import com.quexs.tool.utillib.util.album.OpenAlbumCompat;
 import com.quexs.tool.utillib.util.album.OpenAlbumCompatListener;
+import com.quexs.tool.utillib.util.album.UriPath;
 
+import java.io.File;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -73,6 +76,11 @@ public class MainActivity extends AppCompatActivity {
      * @param uri
      */
     private void showRadioAlbum(Uri uri){
+        String filePath = new UriPath(this).getAbsolutePath(uri);
+        Log.d("file", "filePath=" + filePath);
+        File file = new File(filePath);
+        Log.d("file", "fileExist=" + file.exists());
+
         Glide.with(binding.imvPicture)
                 .load(uri)
                 .into(binding.imvPicture);
