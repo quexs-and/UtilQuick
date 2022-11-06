@@ -1,6 +1,5 @@
 package com.quexs.tool.utillib.util.album;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
@@ -34,9 +33,7 @@ public class OpenAlbumCompat {
         String ALL = "*/*";
     }
 
-    private String type;
     private ActivityResultLauncher<Intent> albumLauncher;
-    private ActivityResultLauncher<String> writeLauncher;
     private int maxSelectCount;
     private OpenAlbumCompatListener openAlbumCompatListener;
 
@@ -46,10 +43,7 @@ public class OpenAlbumCompat {
      * @param activity
      */
     public OpenAlbumCompat(ComponentActivity activity) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            writeLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
-        }
-        albumLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackAlbum);
+        this.albumLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackAlbum);
     }
 
     /**
@@ -58,10 +52,7 @@ public class OpenAlbumCompat {
      * @param fragment
      */
     public OpenAlbumCompat(Fragment fragment) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            writeLauncher = fragment.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
-        }
-        albumLauncher = fragment.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackAlbum);
+        this.albumLauncher = fragment.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackAlbum);
     }
 
     /**
@@ -70,13 +61,8 @@ public class OpenAlbumCompat {
      * @param count
      */
     public void open(@AlbumType String type, int count) {
-        this.type = type;
         this.maxSelectCount = Math.max(count, 1);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            writeLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
-        }else if(Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU){
-            open();
-        } else {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
             //Android 13 新特性
             Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
             if (!TextUtils.equals(type, AlbumType.ALL)) {
@@ -84,19 +70,8 @@ public class OpenAlbumCompat {
             }
             intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, maxSelectCount);
             albumLauncher.launch(intent);
+            return;
         }
-    }
-
-    /**
-     * 相册打开监听
-     *
-     * @param openAlbumCompatListener
-     */
-    public void setOpenAlbumCompatListener(OpenAlbumCompatListener openAlbumCompatListener) {
-        this.openAlbumCompatListener = openAlbumCompatListener;
-    }
-
-    private void open() {
         Intent albumIntent = new Intent();
         albumIntent.addCategory(Intent.CATEGORY_OPENABLE);
         switch (type) {
@@ -120,10 +95,18 @@ public class OpenAlbumCompat {
     }
 
     /**
+     * 相册打开监听
+     *
+     * @param openAlbumCompatListener
+     */
+    public void setOpenAlbumCompatListener(OpenAlbumCompatListener openAlbumCompatListener) {
+        this.openAlbumCompatListener = openAlbumCompatListener;
+    }
+
+    /**
      * 主动释放
      */
     public void release() {
-        writeLauncher = null;
         albumLauncher = null;
         openAlbumCompatListener = null;
     }
@@ -157,20 +140,5 @@ public class OpenAlbumCompat {
         }
     }
 
-    /**
-     * 写入权限回调
-     *
-     * @param result
-     */
-    private void onWriteAlbum(Boolean result) {
-        if (result) {
-            open();
-        } else {
-            //没有权限
-            if (openAlbumCompatListener != null) {
-                openAlbumCompatListener.deniedOpen();
-            }
-        }
-    }
 
 }

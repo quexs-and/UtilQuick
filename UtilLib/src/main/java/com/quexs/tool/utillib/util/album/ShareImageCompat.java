@@ -53,9 +53,7 @@ public class ShareImageCompat {
     public ShareImageCompat(ComponentActivity activity, String prefix) {
         this.prefix = prefix;
         this.context = activity;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            writeLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
-        }
+        this.writeLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
     }
 
     /**
@@ -67,9 +65,7 @@ public class ShareImageCompat {
     public ShareImageCompat(Fragment fragment, String prefix) {
         this.prefix = prefix;
         this.context = fragment.getContext();
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            writeLauncher = fragment.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
-        }
+        this.writeLauncher = fragment.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
     }
 
     /**
@@ -102,10 +98,10 @@ public class ShareImageCompat {
      */
     public void shareToAlbum(String imagePath) {
         this.imagePath = imagePath;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             writeLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         } else {
-            saveImageToAlbum(imagePath);
+            writeLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES);
         }
     }
 
@@ -271,7 +267,7 @@ public class ShareImageCompat {
     private boolean isExitImageFileInContentResolver(File file) {
         String[] projection = {MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.DATE_ADDED,};
+                MediaStore.Images.Media.DATE_ADDED};
         String selection = (MediaStore.Images.Media.DISPLAY_NAME) + "=?";
         Cursor cursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 projection, selection,

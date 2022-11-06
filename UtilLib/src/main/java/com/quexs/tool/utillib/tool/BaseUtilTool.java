@@ -36,7 +36,7 @@ public class BaseUtilTool {
      * @return
      */
     public ViewConvert getViewConvert() {
-        if(viewConvert != null){
+        if(viewConvert == null){
             viewConvert = new ViewConvert();
         }
         return viewConvert;

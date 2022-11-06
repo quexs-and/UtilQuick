@@ -52,9 +52,7 @@ public class ShareVideoCompat {
     public ShareVideoCompat(ComponentActivity activity, String prefix) {
         this.prefix = prefix;
         this.context = activity;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            writeLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
-        }
+        writeLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
     }
 
     /**
@@ -66,9 +64,7 @@ public class ShareVideoCompat {
     public ShareVideoCompat(Fragment fragment, String prefix) {
         this.prefix = prefix;
         this.context = fragment.getContext();
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            writeLauncher = fragment.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
-        }
+        writeLauncher = fragment.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onWriteAlbum);
     }
 
     /**
@@ -101,10 +97,10 @@ public class ShareVideoCompat {
      */
     public void shareToAlbum(String videoPath) {
         this.videoPath = videoPath;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             writeLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         }else {
-            saveVideoToAlbum(videoPath);
+            writeLauncher.launch(Manifest.permission.READ_MEDIA_VIDEO);
         }
     }
 
@@ -267,7 +263,7 @@ public class ShareVideoCompat {
     private boolean isExitVideoFileInContentResolver(File file) {
         String[] projection = {MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.DATE_ADDED,};
+                MediaStore.Images.Media.DATE_ADDED};
         String selection = (MediaStore.Video.Media.DISPLAY_NAME) + "=?";
         Cursor cursor = context.getContentResolver().query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 projection, selection,

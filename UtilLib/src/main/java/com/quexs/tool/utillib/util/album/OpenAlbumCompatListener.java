@@ -5,9 +5,7 @@ import android.net.Uri;
 import java.util.List;
 
 public interface OpenAlbumCompatListener {
-    /**
-     * 拒绝被权限
-     */
+
     void deniedOpen();
 
     /**
