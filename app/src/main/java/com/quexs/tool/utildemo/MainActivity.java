@@ -11,7 +11,7 @@ import com.bumptech.glide.Glide;
 import com.quexs.tool.utildemo.databinding.ActivityMainBinding;
 import com.quexs.tool.utillib.util.album.OpenAlbumCompat;
 import com.quexs.tool.utillib.util.album.OpenAlbumCompatListener;
-import com.quexs.tool.utillib.util.album.UriPath;
+import com.quexs.tool.utillib.util.album.UriConvertCompat;
 
 import java.io.File;
 import java.util.List;
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
      * @param uri
      */
     private void showRadioAlbum(Uri uri){
-        String filePath = new UriPath(this).getAbsolutePath(uri);
+        String filePath = new UriConvertCompat(this).getAbsolutePath(uri);
         Log.d("file", "filePath=" + filePath);
         File file = new File(filePath);
         Log.d("file", "fileExist=" + file.exists());

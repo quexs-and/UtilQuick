@@ -23,10 +23,10 @@ import java.util.Calendar;
 /**
  * Uri 转 文件路径
  */
-public class UriPath {
+public class UriConvertCompat {
     private Context appContext;
 
-    public UriPath(Context appContext){
+    public UriConvertCompat(Context appContext){
         this.appContext = appContext;
     }
 
