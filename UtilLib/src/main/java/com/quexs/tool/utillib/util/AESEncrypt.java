@@ -17,7 +17,7 @@ public class AESEncrypt {
     //加密算法
     private final String keyAlgorithm;
     //字符编码
-    private final Charset CHARSET_UTF8 = StandardCharsets.UTF_8;;
+    private final Charset CHARSET_UTF8 = StandardCharsets.UTF_8;
 
     public AESEncrypt(){
         this("AES");
