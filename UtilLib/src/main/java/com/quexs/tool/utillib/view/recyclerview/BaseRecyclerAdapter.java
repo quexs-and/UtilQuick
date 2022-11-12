@@ -325,7 +325,7 @@ public abstract class BaseRecyclerAdapter<T, VH extends RecyclerView.ViewHolder>
     private boolean isRunningRunnable;
 
     public BaseRecyclerAdapter() {
-        this(false);
+        this(true);
     }
 
     /**
@@ -336,15 +336,19 @@ public abstract class BaseRecyclerAdapter<T, VH extends RecyclerView.ViewHolder>
     }
 
     /**
+     *
      * @param isEnableAddItemReplace 是否启用 位置替换
+     * @param isEnableLetterLocalMap 是否启用 字母地位
      */
     public BaseRecyclerAdapter(boolean isEnableAddItemReplace, boolean isEnableLetterLocalMap) {
         this(isEnableAddItemReplace, isEnableLetterLocalMap, false);
     }
 
     /**
-     * @param isEnableAddItemReplace 是否启用-同位置item自动替换(添加数据源时)
-     * @param isEnableLetterLocalMap 是否启用-第二字母定位定位数据位置
+     *
+     * @param isEnableAddItemReplace 是否启用 位置替换
+     * @param isEnableLetterLocalMap 是否启用 字母地位
+     * @param isEnableListItemMap 是否启用 同源集合
      */
     public BaseRecyclerAdapter(boolean isEnableAddItemReplace, boolean isEnableLetterLocalMap, boolean isEnableListItemMap) {
         this.isEnableAddItemReplace = isEnableAddItemReplace;
@@ -386,8 +390,8 @@ public abstract class BaseRecyclerAdapter<T, VH extends RecyclerView.ViewHolder>
 
     /**
      * 字母定位Key
-     *
      * @param adapterBean
+     * @param previousAdapterBean
      * @return
      */
     public Object getLetterKey(BaseAdapterBean<T> adapterBean, BaseAdapterBean<T> previousAdapterBean) {
