@@ -3,7 +3,7 @@ package com.quexs.tool.utillib.tool;
 import android.app.Application;
 
 import com.quexs.tool.utillib.util.ViewConvert;
-import com.quexs.tool.utillib.util.app.AppManager;
+import com.quexs.tool.utillib.util.stack.AppManager;
 
 /**
  * 实用程序工具基类

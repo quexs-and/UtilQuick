@@ -1,4 +1,4 @@
-package com.quexs.tool.utillib.util.app;
+package com.quexs.tool.utillib.util.stack;
 
 import android.app.Activity;
 import android.app.Application;
