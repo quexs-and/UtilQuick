@@ -11,6 +11,7 @@ public class MyUtilTool extends BaseUtilTool {
 
     private JsonWrapper json;
 
+
     public static MyUtilTool getInstance() {
         if (instance == null) {
             synchronized (MyUtilTool.class) {

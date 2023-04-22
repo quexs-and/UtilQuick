@@ -9,9 +9,9 @@ import android.view.View;
 
 import com.bumptech.glide.Glide;
 import com.quexs.tool.utildemo.databinding.ActivityMainBinding;
-import com.quexs.tool.utillib.util.album.OpenAlbumCompat;
-import com.quexs.tool.utillib.util.album.OpenAlbumCompatListener;
-import com.quexs.tool.utillib.util.album.UriConvertCompat;
+import com.quexs.tool.utillib.compat.album.OpenAlbumCompat;
+import com.quexs.tool.utillib.compat.album.OpenAlbumCompatListener;
+import com.quexs.tool.utillib.compat.UriConvertCompat;
 
 import java.io.File;
 import java.util.List;

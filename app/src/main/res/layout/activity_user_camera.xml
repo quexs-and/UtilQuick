@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    tools:context=".UserCameraActivity">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/view_finder"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.quexs.tool.utildemo.view.CircleProgressButtonView
+        android:id="@+id/record_view"
+        android:layout_width="@dimen/dp_120"
+        android:layout_height="@dimen/dp_120"
+        android:layout_marginBottom="@dimen/dp_40"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <ImageView
+        android:id="@+id/imv_switch_camera"
+        android:layout_width="@dimen/dp_40"
+        android:layout_height="@dimen/dp_40"
+        app:layout_constraintTop_toTopOf="@id/record_view"
+        app:layout_constraintBottom_toBottomOf="@id/record_view"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/record_view"
+        android:src="@drawable/ic_switch_camera"/>
+
+    <ImageView
+        android:id="@+id/imv_close"
+        android:layout_width="@dimen/dp_32"
+        android:layout_height="@dimen/dp_32"
+        android:src="@drawable/ic_close_write"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="@dimen/dp_14"
+        android:layout_marginTop="@dimen/dp_10"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

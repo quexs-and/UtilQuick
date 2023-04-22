@@ -11,7 +11,7 @@ import androidx.annotation.RequiresApi;
 import com.bumptech.glide.Glide;
 import com.quexs.tool.utildemo.R;
 import com.quexs.tool.utillib.tool.ScaleTool;
-import com.quexs.tool.utillib.util.ScreenCompat;
+import com.quexs.tool.utillib.compat.ScreenCompat;
 import com.quexs.tool.utillib.view.ninegridlayout.NineGridLayout;
 import com.quexs.tool.utillib.view.ninegridlayout.RatioImageView;
 
