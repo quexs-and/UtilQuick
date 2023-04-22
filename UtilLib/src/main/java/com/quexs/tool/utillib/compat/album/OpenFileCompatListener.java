@@ -4,18 +4,18 @@ import android.net.Uri;
 
 import java.util.List;
 
-public interface OpenAlbumCompatListener {
+public interface OpenFileCompatListener {
 
     void deniedOpen();
 
     /**
-     * 单选 打开相册
+     * 单选 打开文件管理器
      * @param uri
      */
     void radioOpen(Uri uri);
 
     /**
-     * 多选 打开相册
+     * 多选 打开文件管理器
      * @param list
      */
     void multipleOpen(List<Uri> list);
