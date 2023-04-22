@@ -1,5 +1,6 @@
-package com.quexs.tool.utillib.util.album;
+package com.quexs.tool.utillib.compat.album;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
@@ -7,9 +8,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.activity.ComponentActivity;
 import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.StringDef;
@@ -34,8 +37,11 @@ public class OpenAlbumCompat {
     }
 
     private ActivityResultLauncher<Intent> albumLauncher;
+    private ActivityResultLauncher<String> writeLauncher;
     private int maxSelectCount;
     private OpenAlbumCompatListener openAlbumCompatListener;
+
+    private @AlbumType String openType;
 
     /**
      * 应当在onCreate中创建
@@ -44,6 +50,7 @@ public class OpenAlbumCompat {
      */
     public OpenAlbumCompat(ComponentActivity activity) {
         this.albumLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackAlbum);
+        this.writeLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onPermissionResult);
     }
 
     /**
@@ -53,6 +60,7 @@ public class OpenAlbumCompat {
      */
     public OpenAlbumCompat(Fragment fragment) {
         this.albumLauncher = fragment.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackAlbum);
+        this.writeLauncher = fragment.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onPermissionResult);
     }
 
     /**
@@ -61,20 +69,29 @@ public class OpenAlbumCompat {
      * @param count
      */
     public void open(@AlbumType String type, int count) {
+        this.openType = type;
         this.maxSelectCount = Math.max(count, 1);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            //Android 13 新特性
-            Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-            if (!TextUtils.equals(type, AlbumType.ALL)) {
-                intent.setType(type);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT != Build.VERSION_CODES.Q){
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+                //Android 13 新特性
+                Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+                if (!TextUtils.equals(type, AlbumType.ALL)) {
+                    intent.setType(type);
+                }
+                intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, maxSelectCount);
+                albumLauncher.launch(intent);
+            }else {
+                this.writeLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
             }
-            intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, maxSelectCount);
-            albumLauncher.launch(intent);
             return;
         }
+        lastOpen();
+    }
+
+    private void lastOpen() {
         Intent albumIntent = new Intent();
         albumIntent.addCategory(Intent.CATEGORY_OPENABLE);
-        switch (type) {
+        switch (openType) {
             case AlbumType.IMAGE:
                 albumIntent.setType("image/*");
                 break;
@@ -107,8 +124,15 @@ public class OpenAlbumCompat {
      * 主动释放
      */
     public void release() {
+        writeLauncher = null;
         albumLauncher = null;
         openAlbumCompatListener = null;
+    }
+
+    private void onPermissionResult(boolean result){
+        if(result){
+            lastOpen();
+        }
     }
 
     /**

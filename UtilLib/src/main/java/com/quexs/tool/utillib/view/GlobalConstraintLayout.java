@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
-import com.quexs.tool.utillib.util.ScreenCompat;
+import com.quexs.tool.utillib.compat.ScreenCompat;
 
 /**
  * 加入了视图宽高改变监听的 ConstraintLayout

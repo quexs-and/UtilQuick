@@ -1,4 +1,4 @@
-package com.quexs.tool.utillib.util.album;
+package com.quexs.tool.utillib.compat;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -14,6 +14,8 @@ import android.provider.OpenableColumns;
 
 import androidx.annotation.RequiresApi;
 
+import com.quexs.tool.utillib.util.FilePath;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,9 +27,27 @@ import java.util.Calendar;
  */
 public class UriConvertCompat {
     private Context appContext;
+    private boolean isEnableCacheForQ;
+    private boolean isEnableCopyForR;
 
     public UriConvertCompat(Context appContext){
         this.appContext = appContext;
+    }
+
+    /**
+     * 设置Android Q以上 复制的 文件是否存储在缓存中
+     * @param enableCacheForQ
+     */
+    public void setEnableCacheForQ(boolean enableCacheForQ) {
+        isEnableCacheForQ = enableCacheForQ;
+    }
+
+    /**
+     * 设置Android R以上 是否复制缓存文件来获取文件
+     * @param enableCopyForR
+     */
+    public void setEnableCopyForR(boolean enableCopyForR) {
+        isEnableCopyForR = enableCopyForR;
     }
 
     /**
@@ -36,7 +56,16 @@ public class UriConvertCompat {
      * @return
      */
     public String getAbsolutePath(Uri uri){
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) return getAbsolutePathFromApiQ(uri,true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+                if(isEnableCopyForR){
+                    return getAbsolutePathFromApiQ(uri);
+                }else {
+                    return getAbsolutePathDoesNotApiQ(uri);
+                }
+            }
+            return getAbsolutePathFromApiQ(uri);
+        }
         return getAbsolutePathDoesNotApiQ(uri);
     }
 
@@ -68,15 +97,13 @@ public class UriConvertCompat {
                 String docId = DocumentsContract.getDocumentId(uri);
                 String[] divide = docId.split(":");
                 String type = divide[0];
-                Uri mediaUri;
+                Uri mediaUri = null;
                 if ("image".equalsIgnoreCase(type)) {
                     mediaUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
                 } else if ("video".equals(type)) {
                     mediaUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
                 } else if ("audio".equals(type)) {
                     mediaUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                }else {
-                    return null;
                 }
                 mediaUri = ContentUris.withAppendedId(mediaUri, Long.parseLong(divide[1]));
                 return queryAbsolutePath(mediaUri, "_id=?", new String[]{divide[1]});
@@ -127,7 +154,7 @@ public class UriConvertCompat {
             try {
                 if (cursor.moveToNext()) {
                     int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-                    return  cursor.getString(columnIndex);
+                    return cursor.getString(columnIndex);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -145,7 +172,7 @@ public class UriConvertCompat {
      * @return
      */
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    private String getAbsolutePathFromApiQ(Uri uri, boolean isCache) {
+    private String getAbsolutePathFromApiQ(Uri uri) {
         if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
             File file = new File(uri.getPath());
             return file.getAbsolutePath();
@@ -160,7 +187,7 @@ public class UriConvertCompat {
                         int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                         String displayName = cursor.getString(columnIndex);
                         InputStream is = contentResolver.openInputStream(uri);
-                        File file = new File(isCache ? getCacheFileDirectory() : getFileDirectory(contentResolver,uri), Calendar.getInstance().getTimeInMillis() + "_" + displayName);
+                        File file = new File(isEnableCacheForQ ?FilePath.getCachePath(appContext, "convert", true)  : FilePath.getPath(appContext, "convert", true), Calendar.getInstance().getTimeInMillis() + "_" + displayName);
                         FileOutputStream fos = new FileOutputStream(file);
                         FileUtils.copy(is, fos);
                         fos.close();
@@ -175,45 +202,5 @@ public class UriConvertCompat {
             }
         }
         return null;
-    }
-
-    /**
-     * 获取缓存目录
-     * @return
-     */
-    private String getCacheFileDirectory(){
-        File file = isSDCardMounted() ? appContext.getExternalCacheDir() : appContext.getCacheDir();
-        if(file.exists() || file.mkdirs()){
-            return file.getAbsolutePath();
-        }
-        return "";
-    }
-
-    /**
-     * 获取文件目录
-     * @param contentResolver
-     * @param uri
-     * @return
-     */
-    private String getFileDirectory(ContentResolver contentResolver, Uri uri){
-        String type = contentResolver.getType(uri);
-        File file;
-        if(isSDCardMounted()){
-            file = appContext.getExternalFilesDir(type);
-        }else {
-            file = new File(appContext.getFilesDir().getPath(), type);
-        }
-        if(file.exists() || file.mkdirs()){
-            return file.getAbsolutePath();
-        }
-        return "";
-    }
-
-    /**
-     * 判断SD卡是否挂载
-     * @return
-     */
-    public boolean isSDCardMounted(){
-        return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
     }
 }

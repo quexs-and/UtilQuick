@@ -1,4 +1,4 @@
-package com.quexs.tool.utillib.util;
+package com.quexs.tool.utillib.compat;
 
 import android.app.Activity;
 import android.content.Context;

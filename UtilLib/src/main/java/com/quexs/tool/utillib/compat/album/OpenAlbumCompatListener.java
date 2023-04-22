@@ -1,4 +1,4 @@
-package com.quexs.tool.utillib.util.album;
+package com.quexs.tool.utillib.compat.album;
 
 import android.net.Uri;
 
