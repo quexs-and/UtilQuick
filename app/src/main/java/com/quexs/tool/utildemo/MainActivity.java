@@ -6,11 +6,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.quexs.tool.utildemo.databinding.ActivityMainBinding;
-import com.quexs.tool.utillib.compat.album.OpenAlbumCompat;
-import com.quexs.tool.utillib.compat.album.OpenAlbumCompatListener;
+import com.quexs.tool.utillib.compat.album.OpenFileCompat;
+import com.quexs.tool.utillib.compat.album.OpenFileCompatListener;
 import com.quexs.tool.utillib.compat.UriConvertCompat;
 
 import java.io.File;
@@ -19,7 +20,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
-    private OpenAlbumCompat openAlbumCompat;
+    private OpenFileCompat openFileCompat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initOpenAlbum(){
-        openAlbumCompat = new OpenAlbumCompat(this);
-        openAlbumCompat.setOpenAlbumCompatListener(new OpenAlbumCompatListener() {
+        openFileCompat = new OpenFileCompat(this);
+        openFileCompat.setOpenAlbumCompatListener(new OpenFileCompatListener() {
             @Override
             public void deniedOpen() {
 
@@ -45,7 +46,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void multipleOpen(List<Uri> list) {
-
+                showRadioAlbum(list.get(0));
+                Toast.makeText(MainActivity.this, "" + list.size(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -58,8 +60,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         binding = null;
-        openAlbumCompat.release();
-        openAlbumCompat = null;
+        openFileCompat.release();
+        openFileCompat = null;
     }
 
     /**
@@ -68,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void openAlbum(View v){
         if(!MyUtilTool.getInstance().getViewConvert().isEffectiveClick(v)) return;
-        openAlbumCompat.open(OpenAlbumCompat.AlbumType.IMAGE, 1);
+        openFileCompat.open(OpenFileCompat.AlbumType.IMAGE, 2);
     }
 
     /**
