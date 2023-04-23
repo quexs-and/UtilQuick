@@ -1,8 +1,8 @@
 package com.quexs.tool.utildemo;
 
-import android.app.Application;
+import androidx.multidex.MultiDexApplication;
 
-public class MyApplication extends Application {
+public class MyApplication extends MultiDexApplication {
 
     @Override
     public void onCreate() {
