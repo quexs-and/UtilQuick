@@ -10,7 +10,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.quexs.tool'
                 artifactId = 'utillib'
-                version = '1.0.10'
+                version = '1.0.11'
             }
         }
     }

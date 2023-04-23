@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void openAlbum(View v){
         if(!MyUtilTool.getInstance().getViewConvert().isEffectiveClick(v)) return;
-        openFileCompat.open(OpenFileCompat.AlbumType.IMAGE, 2);
+        openFileCompat.open(OpenFileCompat.AlbumType.ALL, 2);
     }
 
     /**
@@ -78,14 +78,14 @@ public class MainActivity extends AppCompatActivity {
      * @param uri
      */
     private void showRadioAlbum(Uri uri){
-        String filePath = new UriConvertCompat(this).getAbsolutePath(uri);
+        String filePath = new UriConvertCompat(this).setEnableCopyForR(true).getAbsolutePathFromGetContentUri(uri);
         Log.d("file", "filePath=" + filePath);
         File file = new File(filePath);
         Log.d("file", "fileExist=" + file.exists());
 
-        Glide.with(binding.imvPicture)
-                .load(uri)
-                .into(binding.imvPicture);
+//        Glide.with(binding.imvPicture)
+//                .load(uri)
+//                .into(binding.imvPicture);
 
     }
 

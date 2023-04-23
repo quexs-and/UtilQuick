@@ -27,68 +27,75 @@ import java.util.Calendar;
  */
 public class UriConvertCompat {
     private Context appContext;
-    private boolean isEnableCacheForQ;
+    private boolean isEnableCache;
     private boolean isEnableCopyForR;
 
-    public UriConvertCompat(Context appContext){
-        this.appContext = appContext;
+    public UriConvertCompat(Context context) {
+        this.appContext = context.getApplicationContext();
     }
 
     /**
-     * 设置Android Q以上 复制的 文件是否存储在缓存中
-     * @param enableCacheForQ
+     * 如果是复制文件，则复制到缓存中
+     *
+     * @param isEnableCache
      */
-    public void setEnableCacheForQ(boolean enableCacheForQ) {
-        isEnableCacheForQ = enableCacheForQ;
+    public UriConvertCompat seEnableCache(boolean isEnableCache) {
+        this.isEnableCache = isEnableCache;
+        return this;
     }
 
     /**
      * 设置Android R以上 是否复制缓存文件来获取文件
+     *
      * @param enableCopyForR
      */
-    public void setEnableCopyForR(boolean enableCopyForR) {
+    public UriConvertCompat setEnableCopyForR(boolean enableCopyForR) {
         isEnableCopyForR = enableCopyForR;
+        return this;
     }
 
     /**
      * 获取文件路径
+     *
      * @param uri
      * @return
      */
-    public String getAbsolutePath(Uri uri){
+    public String getAbsolutePath(Uri uri) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                if(isEnableCopyForR){
-                    return getAbsolutePathFromApiQ(uri);
-                }else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (isEnableCopyForR) {
+                    return getAbsolutePathFromGetContentUri(uri);
+                } else {
                     return getAbsolutePathDoesNotApiQ(uri);
                 }
             }
-            return getAbsolutePathFromApiQ(uri);
+            return getAbsolutePathFromGetContentUri(uri);
         }
         return getAbsolutePathDoesNotApiQ(uri);
     }
 
     /**
      * 获取Uri文件路径 不包括 Android Q
+     *
      * @param uri
      * @return
      */
-    public String getAbsolutePathDoesNotApiQ(Uri uri){
+    public String getAbsolutePathDoesNotApiQ(Uri uri) {
         //Android Q 单独处理方案
         if (DocumentsContract.isDocumentUri(appContext, uri)) {
             if (isExternalStorageDocument(uri)) {
                 // 外部存储空间
                 String docId = DocumentsContract.getDocumentId(uri);
                 String[] divide = docId.split(":");
-                if ("primary".equalsIgnoreCase(divide[0])) return Environment.getExternalStorageDirectory().getAbsolutePath().concat("/").concat(divide[1]);
+                if ("primary".equalsIgnoreCase(divide[0]))
+                    return Environment.getExternalStorageDirectory().getAbsolutePath().concat("/").concat(divide[1]);
                 return "/storage/".concat(divide[0]).concat("/").concat(divide[1]);
             } else if (isDownloadDocument(uri)) {
                 // 下載目錄
                 String docId = DocumentsContract.getDocumentId(uri);
                 if (docId.startsWith("raw:")) {
                     return docId.replaceFirst("raw:", "");
-                }else {
+                } else {
                     Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.parseLong(docId));
                     return queryAbsolutePath(contentUri, null, null);
                 }
@@ -110,16 +117,16 @@ public class UriConvertCompat {
             }
         } else {
             // 如果是一般的URI
-            if ("content".equalsIgnoreCase(uri.getScheme())){
-                if(isGooglePhotosUri(uri)){
+            if ("content".equalsIgnoreCase(uri.getScheme())) {
+                if (isGooglePhotosUri(uri)) {
                     return uri.getLastPathSegment();
-                }else {
+                } else {
                     // 內容URI
                     return queryAbsolutePath(uri, null, null);
                 }
-            }else if ("file".equalsIgnoreCase(uri.getScheme())){
+            } else if ("file".equalsIgnoreCase(uri.getScheme())) {
                 return uri.getPath();
-            }else {
+            } else {
                 return queryAbsolutePath(uri, null, null);
             }
         }
@@ -142,15 +149,15 @@ public class UriConvertCompat {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
 
-    public void release(){
+    public void release() {
         appContext = null;
     }
 
-    public String queryAbsolutePath(Uri uri, String selection, String[] selectionArgs){
+    public String queryAbsolutePath(Uri uri, String selection, String[] selectionArgs) {
         String[] projection = {MediaStore.MediaColumns.DATA};
         ContentResolver contentResolver = appContext.getContentResolver();
         Cursor cursor = contentResolver.query(uri, projection, selection, selectionArgs, null);
-        if(cursor != null){
+        if (cursor != null) {
             try {
                 if (cursor.moveToNext()) {
                     int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
@@ -158,7 +165,7 @@ public class UriConvertCompat {
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
-            }finally {
+            } finally {
                 cursor.close();
             }
         }
@@ -166,13 +173,11 @@ public class UriConvertCompat {
     }
 
     /**
-     * Android Q 单独获取文件路径
      *
      * @param uri
      * @return
      */
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private String getAbsolutePathFromApiQ(Uri uri) {
+    public String getAbsolutePathFromGetContentUri(Uri uri) {
         if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
             File file = new File(uri.getPath());
             return file.getAbsolutePath();
@@ -186,12 +191,23 @@ public class UriConvertCompat {
                     if (cursor.moveToNext()) {
                         int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                         String displayName = cursor.getString(columnIndex);
-                        InputStream is = contentResolver.openInputStream(uri);
-                        File file = new File(isEnableCacheForQ ?FilePath.getCachePath(appContext, "convert", true)  : FilePath.getPath(appContext, "convert", true), Calendar.getInstance().getTimeInMillis() + "_" + displayName);
-                        FileOutputStream fos = new FileOutputStream(file);
-                        FileUtils.copy(is, fos);
-                        fos.close();
-                        is.close();
+                        File file = new File(isEnableCache ? FilePath.getCachePath(appContext, "convert", true) : FilePath.getPath(appContext, "convert", true), displayName);
+                        if (!file.exists()) {
+                            InputStream is = contentResolver.openInputStream(uri);
+                            FileOutputStream fos = new FileOutputStream(file);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                FileUtils.copy(is, fos);
+                            } else {
+                                byte[] bt = new byte[1024];
+                                int l;
+                                while ((l = is.read(bt)) > 0) {
+                                    fos.write(bt, 0, l);
+                                }
+                                fos.flush();
+                            }
+                            fos.close();
+                            is.close();
+                        }
                         return file.getAbsolutePath();
                     }
                 } catch (IOException e) {
@@ -203,4 +219,6 @@ public class UriConvertCompat {
         }
         return null;
     }
+
+
 }

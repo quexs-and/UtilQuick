@@ -141,7 +141,12 @@ public class OpenFileCompat {
 
     private void lastOpen() {
         Intent albumIntent = new Intent();
-        albumIntent.setType(openType);
+        if(AlbumType.IMAGE_AND_VIDEO.equals(openType)){
+            albumIntent.setType(AlbumType.ALL);
+            albumIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {AlbumType.IMAGE, AlbumType.VIDEO});
+        }else {
+            albumIntent.setType(openType);
+        }
         albumIntent.addCategory(Intent.CATEGORY_OPENABLE);
         albumIntent.setAction(Intent.ACTION_GET_CONTENT);
         if (maxSelectCount > 1) {
