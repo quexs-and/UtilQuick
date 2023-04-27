@@ -12,15 +12,10 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 
-import androidx.annotation.RequiresApi;
-
-import com.quexs.tool.utillib.util.FilePath;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Calendar;
 
 /**
  * Uri 转 文件路径
@@ -29,9 +24,11 @@ public class UriConvertCompat {
     private Context appContext;
     private boolean isEnableCache;
     private boolean isEnableCopyForR;
+    private DirectoryCompat directoryCompat;
 
     public UriConvertCompat(Context context) {
         this.appContext = context.getApplicationContext();
+        this.directoryCompat = new DirectoryCompat(context);
     }
 
     /**
@@ -151,6 +148,9 @@ public class UriConvertCompat {
 
     public void release() {
         appContext = null;
+        if(directoryCompat != null){
+            directoryCompat.release();
+        }
     }
 
     public String queryAbsolutePath(Uri uri, String selection, String[] selectionArgs) {
@@ -191,7 +191,7 @@ public class UriConvertCompat {
                     if (cursor.moveToNext()) {
                         int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                         String displayName = cursor.getString(columnIndex);
-                        File file = new File(isEnableCache ? FilePath.getCachePath(appContext, "convert", true) : FilePath.getPath(appContext, "convert", true), displayName);
+                        File file = new File(isEnableCache ? directoryCompat.getCacheDir("Convert") : directoryCompat.getExternalFilesDir("Convert"), displayName);
                         if (!file.exists()) {
                             InputStream is = contentResolver.openInputStream(uri);
                             FileOutputStream fos = new FileOutputStream(file);
