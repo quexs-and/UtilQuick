@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.View;
@@ -32,7 +33,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.quexs.tool.utildemo.databinding.ActivityUserCameraBinding;
 import com.quexs.tool.utildemo.util.CameraConfig;
 import com.quexs.tool.utildemo.view.CircleProgressButtonView;
-import com.quexs.tool.utillib.util.FilePath;
+import com.quexs.tool.utillib.compat.DirectoryCompat;
 import com.quexs.tool.utillib.compat.ScreenCompat;
 
 import java.io.File;
@@ -63,12 +64,15 @@ public class UserCameraActivity extends AppCompatActivity {
 
     private CameraConfig cameraConfig;
 
+    private DirectoryCompat directoryCompat;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityUserCameraBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         initView();
+        directoryCompat = new DirectoryCompat(this);
         cameraConfig = new CameraConfig(this);
         initOrientationListener();
         initRegister();
@@ -230,6 +234,9 @@ public class UserCameraActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         binding = null;
+        if(directoryCompat != null){
+            directoryCompat.release();
+        }
     }
 
     /**
@@ -307,7 +314,7 @@ public class UserCameraActivity extends AppCompatActivity {
      */
     private void onClickTakePhoto() {
         //设置要保存的路径和文件名字
-        File photoFile = new File(FilePath.getPicturePath(this, false), "image-" + System.currentTimeMillis() + ".jpg");
+        File photoFile = new File(directoryCompat.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "image-" + System.currentTimeMillis() + ".jpg");
         if(isOnlyVideoCapture){
             //只支持视频时，需要通过获取 一帧bitmap 来保存拍照图片
             int rotation = curRotation;
@@ -337,7 +344,7 @@ public class UserCameraActivity extends AppCompatActivity {
      */
     @SuppressLint({"MissingPermission"})
     private void onLongTakeVideo() {
-        File file = new File(FilePath.getMoviesPath(this, false), "video-" + System.currentTimeMillis() + ".mp4");
+        File file = new File(directoryCompat.getExternalFilesDir(Environment.DIRECTORY_MOVIES), "video-" + System.currentTimeMillis() + ".mp4");
         videoCapture.startRecording(new VideoCapture.OutputFileOptions.Builder(file).build(), executorService, new VideoCapture.OnVideoSavedCallback() {
             @Override
             public void onVideoSaved(@NonNull VideoCapture.OutputFileResults outputFileResults) {
