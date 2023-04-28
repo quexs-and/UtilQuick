@@ -109,8 +109,11 @@ public class UriConvertCompat {
                 } else if ("audio".equals(type)) {
                     mediaUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                 }
-                mediaUri = ContentUris.withAppendedId(mediaUri, Long.parseLong(divide[1]));
-                return queryAbsolutePath(mediaUri, "_id=?", new String[]{divide[1]});
+                if(mediaUri != null){
+                    mediaUri = ContentUris.withAppendedId(mediaUri, Long.parseLong(divide[1]));
+                    return queryAbsolutePath(mediaUri, "_id=?", new String[]{divide[1]});
+                }
+                return getAbsolutePathFromGetContentUri(uri);
             }
         } else {
             // 如果是一般的URI
@@ -150,6 +153,7 @@ public class UriConvertCompat {
         appContext = null;
         if(directoryCompat != null){
             directoryCompat.release();
+            directoryCompat = null;
         }
     }
 

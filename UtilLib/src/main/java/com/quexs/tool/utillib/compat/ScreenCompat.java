@@ -10,6 +10,8 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowMetrics;
 import androidx.annotation.RequiresApi;
+
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -101,6 +103,16 @@ public class ScreenCompat {
         int resourceId = activity.getResources().getIdentifier("status_bar_height", "dimen", "android");
         if (resourceId > 0) {
             result = activity.getResources().getDimensionPixelSize(resourceId);
+        }else {
+            try {
+                Class<?> c = Class.forName("com.android.internal.R$dimen");
+                Object object = c.newInstance();
+                Field field = c.getField("status_bar_height");
+                int x = (Integer) field.get(object);
+                result = activity.getResources().getDimensionPixelSize(x);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return result;
     }

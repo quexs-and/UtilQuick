@@ -34,21 +34,12 @@ public class MainActivity extends AppCompatActivity {
     private void initOpenAlbum(){
         openFileCompat = new OpenFileCompat(this);
         openFileCompat.setOpenAlbumCompatListener(new OpenFileCompatListener() {
-            @Override
-            public void deniedOpen() {
-
-            }
 
             @Override
-            public void radioOpen(Uri uri) {
-                showRadioAlbum(uri);
+            public void openFilePath(List<String> paths) {
+                showRadioAlbum(paths);
             }
 
-            @Override
-            public void multipleOpen(List<Uri> list) {
-                showRadioAlbum(list.get(0));
-                Toast.makeText(MainActivity.this, "" + list.size(), Toast.LENGTH_SHORT).show();
-            }
         });
     }
 
@@ -70,15 +61,15 @@ public class MainActivity extends AppCompatActivity {
      */
     private void openAlbum(View v){
         if(!MyUtilTool.getInstance().getViewConvert().isEffectiveClick(v)) return;
-        openFileCompat.open(OpenFileCompat.AlbumType.ALL, 2);
+        openFileCompat.open(OpenFileCompat.FileType.ALL, 2);
     }
 
     /**
      * 显示单选图片
-     * @param uri
+     * @param filePaths
      */
-    private void showRadioAlbum(Uri uri){
-        String filePath = new UriConvertCompat(this).setEnableCopyForR(true).getAbsolutePathFromGetContentUri(uri);
+    private void showRadioAlbum(List<String> filePaths){
+        String filePath = filePaths.get(0);
         Log.d("file", "filePath=" + filePath);
         File file = new File(filePath);
         Log.d("file", "fileExist=" + file.exists());

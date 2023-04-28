@@ -1,37 +1,46 @@
 package com.quexs.tool.utillib.compat.album;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.FileUtils;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.text.TextUtils;
-
 import androidx.activity.ComponentActivity;
 import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.StringDef;
 import androidx.fragment.app.Fragment;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.List;
 
 /**
  * 打开相册 选取视频图片
  */
 public class OpenFileCompat {
 
-    @StringDef({AlbumType.VIDEO, AlbumType.IMAGE, AlbumType.IMAGE_AND_VIDEO, AlbumType.AUDIO, AlbumType.ALL})
+    @StringDef({FileType.VIDEO,
+            FileType.IMAGE,
+            FileType.IMAGE_AND_VIDEO,
+            FileType.AUDIO,
+            FileType.ALL})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface AlbumType {
+    public @interface FileType {
         /**
          * 视频
          */
@@ -55,13 +64,11 @@ public class OpenFileCompat {
         String ALL = "*/*";
     }
 
-    private ActivityResultLauncher<Intent> albumLauncher;
-    private ActivityResultLauncher<String> writeLauncher;
-    private ActivityResultLauncher<String[]> permissionsLauncher;
-    private int maxSelectCount;
+    private ActivityResultLauncher<Intent> fileLauncher;
     private OpenFileCompatListener openFileCompatListener;
+    private int maxSelectCount;
 
-    private @AlbumType String openType;
+    private Context mContext;
 
     /**
      * 应当在onCreate中创建
@@ -69,11 +76,8 @@ public class OpenFileCompat {
      * @param activity
      */
     public OpenFileCompat(ComponentActivity activity) {
-        this.albumLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackAlbum);
-        this.writeLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onPermissionResult);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            this.permissionsLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), this::onPermissionResult);
-        }
+        this.mContext = activity;
+        this.fileLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackFile);
     }
 
     /**
@@ -82,11 +86,8 @@ public class OpenFileCompat {
      * @param fragment
      */
     public OpenFileCompat(Fragment fragment) {
-        this.albumLauncher = fragment.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackAlbum);
-        this.writeLauncher = fragment.registerForActivityResult(new ActivityResultContracts.RequestPermission(), this::onPermissionResult);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            this.permissionsLauncher = fragment.registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), this::onPermissionResult);
-        }
+        this.mContext = fragment.getContext();
+        this.fileLauncher = fragment.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackFile);
     }
 
     /**
@@ -103,49 +104,24 @@ public class OpenFileCompat {
      *
      * @param count
      */
-    public void open(@AlbumType String type, int count) {
-        this.openType = type;
-        this.maxSelectCount = Math.max(count, 1);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT != Build.VERSION_CODES.Q) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (AlbumType.ALL.equals(openType)) {
-                    this.permissionsLauncher.launch(new String[]{Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO,Manifest.permission.READ_MEDIA_AUDIO});
-                } else if (AlbumType.AUDIO.equals(openType)) {
-                    this.writeLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO);
-                } else {
-                    //使用 Android 13 新特性 相册
-                    Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-                    if (!TextUtils.equals(type, AlbumType.IMAGE_AND_VIDEO)) {
-                        intent.setType(type);
-                    }
-                    intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, maxSelectCount);
-                    this.albumLauncher.launch(intent);
-                }
-            } else {
-                this.writeLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+    public void open(@FileType String type, int count) {
+        maxSelectCount = Math.max(count, 1);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            //使用 Android 13 新特性 相册 支持指定选择相片最大数量
+            Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            if (!TextUtils.equals(type, FileType.IMAGE_AND_VIDEO)) {
+                intent.setType(type);
             }
+            intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, maxSelectCount);
+            this.fileLauncher.launch(intent);
             return;
         }
-        lastOpen();
-    }
-
-    /**
-     * 主动释放
-     */
-    public void release() {
-        writeLauncher = null;
-        albumLauncher = null;
-        permissionsLauncher = null;
-        openFileCompatListener = null;
-    }
-
-    private void lastOpen() {
         Intent albumIntent = new Intent();
-        if(AlbumType.IMAGE_AND_VIDEO.equals(openType)){
-            albumIntent.setType(AlbumType.ALL);
-            albumIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {AlbumType.IMAGE, AlbumType.VIDEO});
+        if(FileType.IMAGE_AND_VIDEO.equals(type)){
+            albumIntent.setType(FileType.ALL);
+            albumIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {FileType.IMAGE, FileType.VIDEO});
         }else {
-            albumIntent.setType(openType);
+            albumIntent.setType(type);
         }
         albumIntent.addCategory(Intent.CATEGORY_OPENABLE);
         albumIntent.setAction(Intent.ACTION_GET_CONTENT);
@@ -153,53 +129,110 @@ public class OpenFileCompat {
             //启动多选
             albumIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
-        albumLauncher.launch(albumIntent);
+        fileLauncher.launch(albumIntent);
     }
 
-    private void onPermissionResult(boolean result) {
-        if (result) {
-            lastOpen();
+    /**
+     * 主动释放
+     */
+    public void release() {
+        mContext = null;
+        openFileCompatListener = null;
+        if(fileLauncher != null){
+            fileLauncher.unregister();
+            fileLauncher = null;
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
-    private void onPermissionResult(Map<String, Boolean> result) {
-        Boolean isImage = result.get(Manifest.permission.READ_MEDIA_IMAGES);
-        Boolean isVideo = result.get(Manifest.permission.READ_MEDIA_VIDEO);
-        Boolean isAudio = result.get(Manifest.permission.READ_MEDIA_AUDIO);
-        if (isImage != null && isImage && isVideo != null && isVideo && isAudio != null && isAudio) {
-            lastOpen();
-        }
-    }
+
 
     /**
      * 选取图片视频回调
      *
      * @param result
      */
-    private void callbackAlbum(ActivityResult result) {
+    private void callbackFile(ActivityResult result) {
         Intent intent = result.getData();
         if (intent != null && result.getResultCode() == Activity.RESULT_OK) {
-            if(result.getData().getData() != null){
-                if (openFileCompatListener != null) {
-                    openFileCompatListener.radioOpen(result.getData().getData());
-                }
-            }else if(result.getData().getClipData() != null){
-                ClipData clipData = result.getData().getClipData();
-                int lastCount = clipData.getItemCount();
-                LinkedHashSet<Uri> resultSet = new LinkedHashSet<>();
-                for (int i = 0; i < lastCount; i++) {
-                    if (i >= maxSelectCount) {
-                        break;
-                    }
-                    resultSet.add(clipData.getItemAt(i).getUri());
-                }
-                if (openFileCompatListener != null) {
-                    openFileCompatListener.multipleOpen(new ArrayList<>(resultSet));
-                }
+            if(mContext != null){
+                new Thread(new DataRunnable(mContext,intent));
             }
         }
     }
 
+    private File getFileFromUri(Context appContext, Uri uri) {
+        if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
+            return new File(uri.getPath());
+        }
+        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+            //复制文件到沙盒文件
+            ContentResolver contentResolver = appContext.getContentResolver();
+            Cursor cursor = contentResolver.query(uri, null, null, null, null);
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToNext()) {
+                        String displayName = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
+                        File file = new File(appContext.getExternalCacheDir(), displayName);
+                        if (!file.exists()) {
+                            InputStream is = contentResolver.openInputStream(uri);
+                            FileOutputStream fos = new FileOutputStream(file);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                FileUtils.copy(is, fos);
+                            } else {
+                                byte[] bt = new byte[1024];
+                                int l;
+                                while ((l = is.read(bt)) > 0) {
+                                    fos.write(bt, 0, l);
+                                }
+                                fos.flush();
+                            }
+                            fos.close();
+                            is.close();
+                        }
+                        return file;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    cursor.close();
+                }
+            }
+        }
+        return null;
+    }
+
+    private class DataRunnable implements Runnable{
+        private final Intent intent;
+        private final Context appContext;
+        public DataRunnable(Context context, Intent intent){
+            this.intent = intent;
+            this.appContext = context.getApplicationContext();
+        }
+        @Override
+        public void run() {
+            List<String> paths = new ArrayList<>();
+            if(intent.getData() != null){
+                File file = getFileFromUri(appContext, intent.getData());
+                if(file != null){
+                    paths.add(file.getAbsolutePath());
+                }
+                if (openFileCompatListener != null) {
+                    openFileCompatListener.openFilePath(paths);
+                }
+            }else if(intent.getClipData() != null){
+                ClipData clipData = intent.getClipData();
+                int count = Math.min(maxSelectCount, clipData.getItemCount());
+                for (int i = 0; i < count; i++) {
+                    File file = getFileFromUri(appContext, clipData.getItemAt(i).getUri());
+                    if(file != null){
+                        paths.add(file.getAbsolutePath());
+                    }
+                }
+                if(openFileCompatListener != null){
+                    openFileCompatListener.openFilePath(paths);
+                }
+            }
+        }
+    }
 
 }
