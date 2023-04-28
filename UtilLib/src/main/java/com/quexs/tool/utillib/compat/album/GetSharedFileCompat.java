@@ -26,13 +26,12 @@ import java.io.InputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
- * 打开相册 选取视频图片
+ * 打开共享文件管理器 获取文件
  */
-public class OpenFileCompat {
+public class GetSharedFileCompat {
 
     @StringDef({FileType.VIDEO,
             FileType.IMAGE,
@@ -65,7 +64,7 @@ public class OpenFileCompat {
     }
 
     private ActivityResultLauncher<Intent> fileLauncher;
-    private OpenFileCompatListener openFileCompatListener;
+    private GetSharedFileCompatListener getSharedFileCompatListener;
     private int maxSelectCount;
 
     private Context mContext;
@@ -75,7 +74,7 @@ public class OpenFileCompat {
      *
      * @param activity
      */
-    public OpenFileCompat(ComponentActivity activity) {
+    public GetSharedFileCompat(ComponentActivity activity) {
         this.mContext = activity;
         this.fileLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackFile);
     }
@@ -85,7 +84,7 @@ public class OpenFileCompat {
      *
      * @param fragment
      */
-    public OpenFileCompat(Fragment fragment) {
+    public GetSharedFileCompat(Fragment fragment) {
         this.mContext = fragment.getContext();
         this.fileLauncher = fragment.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::callbackFile);
     }
@@ -93,10 +92,10 @@ public class OpenFileCompat {
     /**
      * 相册打开监听
      *
-     * @param openFileCompatListener
+     * @param getSharedFileCompatListener
      */
-    public void setOpenAlbumCompatListener(OpenFileCompatListener openFileCompatListener) {
-        this.openFileCompatListener = openFileCompatListener;
+    public void setOpenAlbumCompatListener(GetSharedFileCompatListener getSharedFileCompatListener) {
+        this.getSharedFileCompatListener = getSharedFileCompatListener;
     }
 
     /**
@@ -137,7 +136,7 @@ public class OpenFileCompat {
      */
     public void release() {
         mContext = null;
-        openFileCompatListener = null;
+        getSharedFileCompatListener = null;
         if(fileLauncher != null){
             fileLauncher.unregister();
             fileLauncher = null;
@@ -216,8 +215,8 @@ public class OpenFileCompat {
                 if(file != null){
                     paths.add(file.getAbsolutePath());
                 }
-                if (openFileCompatListener != null) {
-                    openFileCompatListener.openFilePath(paths);
+                if (getSharedFileCompatListener != null) {
+                    getSharedFileCompatListener.openFilePath(paths);
                 }
             }else if(intent.getClipData() != null){
                 ClipData clipData = intent.getClipData();
@@ -228,8 +227,8 @@ public class OpenFileCompat {
                         paths.add(file.getAbsolutePath());
                     }
                 }
-                if(openFileCompatListener != null){
-                    openFileCompatListener.openFilePath(paths);
+                if(getSharedFileCompatListener != null){
+                    getSharedFileCompatListener.openFilePath(paths);
                 }
             }
         }
